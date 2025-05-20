@@ -5,13 +5,21 @@ function handleAddCard() {
     binder.addCard(0, 'card_back.png');
 }
 
-function turnPage() {
+function turnPageRight() {
     const binder = document.querySelector('pokemon-binder');
-    binder.turnPage();
+    binder.turnPageRight();
+}
+
+function turnPageLeft() {
+    const binder = document.querySelector('pokemon-binder');
+    binder.turnPageLeft();
 }
 
 const addButton = document.getElementById('addCard');
 addButton.addEventListener('click', handleAddCard);
 
-const turnButton = document.getElementById('turnPage');
-turnButton.addEventListener('click', turnPage);
+const turnRightButton = document.getElementById('turnPageRight');
+turnRightButton.addEventListener('click', turnPageRight);
+
+const turnLeftButton = document.getElementById('turnPageLeft');
+turnLeftButton.addEventListener('click', turnPageLeft);

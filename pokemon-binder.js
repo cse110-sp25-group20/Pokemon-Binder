@@ -24,15 +24,21 @@ template.innerHTML = `
             padding: 20px;
             box-sizing: border-box;
 
-            position: relative;            /* ensure transform-origin works */
-            transform-style: preserve-3d;  /* children maintain 3D coords */
+            position: relative;
+            transform-style: preserve-3d;
             transition: transform 0.6s ease;
-            transform-origin: left center; /* pivot along the “spine” */
         }
         .page:not(:last-child) {
             border-right: 1px solid #ccc;
         }
-        .page.turn {
+        /* Right-page turn: pivot on left spine, rotate outward */
+        .page.turn-right {
+            transform-origin: left center;
+            transform: rotateY(180deg);
+        }
+        /* Left-page turn: pivot on right spine, rotate outward */
+        .page.turn-left {
+            transform-origin: right center;
             transform: rotateY(-180deg);
         }
         .card-slot {
@@ -102,13 +108,25 @@ class PokemonBinder extends HTMLElement {
     }
 
     /**
-     * Simple toggle-flip of the right-hand page.
+     * Flip the right-hand page to turn forward.
      */
-    turnPage() {
-        // grab the second page (index 1)
+    turnPageLeft() {
         const pages = this.shadowRoot.querySelectorAll('.page');
         const rightPage = pages[1];
-        rightPage.classList.toggle('turn');
+        rightPage.classList.toggle('turn-right');
+        // Ensure left-page flip class is cleared
+        pages[0].classList.remove('turn-left');
+    }
+
+    /**
+     * Flip the left-hand page to turn backward.
+     */
+    turnPageRight() {
+        const pages = this.shadowRoot.querySelectorAll('.page');
+        const leftPage = pages[0];
+        leftPage.classList.toggle('turn-left');
+        // Ensure right-page flip class is cleared
+        pages[1].classList.remove('turn-right');
     }
 }
 
