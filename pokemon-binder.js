@@ -8,7 +8,6 @@ template.innerHTML = `
             border: 2px solid #333;
             background: #f9f9f9;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            perspective: 1000px;
         }
         .binder {
             display: flex;
@@ -17,29 +16,22 @@ template.innerHTML = `
         }
         .page {
             flex: 1;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            padding: 10px;
+        }
+        .page-number {
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .cards-container {
+            flex: 1;
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: repeat(3, auto);
             gap: 10px;
-            padding: 20px;
-            box-sizing: border-box;
-
-            position: relative;
-            transform-style: preserve-3d;
-            transition: transform 0.6s ease;
-        }
-        .page:not(:last-child) {
-            border-right: 1px solid #ccc;
-        }
-        /* Right-page turn: pivot on left spine, rotate outward */
-        .page.turn-right {
-            transform-origin: left center;
-            transform: rotateY(180deg);
-        }
-        /* Left-page turn: pivot on right spine, rotate outward */
-        .page.turn-left {
-            transform-origin: right center;
-            transform: rotateY(-180deg);
         }
         .card-slot {
             width: 100%;
@@ -61,26 +53,12 @@ template.innerHTML = `
     </style>
     <div class="binder">
         <div class="page">
-            <div class="card-slot"></div>
-            <div class="card-slot"></div>
-            <div class="card-slot"></div>
-            <div class="card-slot"></div>
-            <div class="card-slot"></div>
-            <div class="card-slot"></div>
-            <div class="card-slot"></div>
-            <div class="card-slot"></div>
-            <div class="card-slot"></div>
+            <div class="page-number"></div>
+            <div class="cards-container"></div>
         </div>
         <div class="page">
-            <div class="card-slot"></div>
-            <div class="card-slot"></div>
-            <div class="card-slot"></div>
-            <div class="card-slot"></div>
-            <div class="card-slot"></div>
-            <div class="card-slot"></div>
-            <div class="card-slot"></div>
-            <div class="card-slot"></div>
-            <div class="card-slot"></div>
+            <div class="page-number"></div>
+            <div class="cards-container"></div>
         </div>
     </div>
 `;
@@ -90,43 +68,79 @@ class PokemonBinder extends HTMLElement {
         super();
         this.attachShadow({ mode: 'open' });
         this.shadowRoot.appendChild(template.content.cloneNode(true));
+
+        /**
+         * pagesData: array where each entry is an array of 9 image URLs (strings)
+         */
+        this.pagesData = [];
+        this.currentIndex = 0;
+        this._renderPages();
     }
 
     /**
-     * Adds an image to the specified slot index (0–17).
-     * @param {number} slotIndex - Index of the slot (0 = first slot on left page, top-left).
-     * @param {string} imgUrl - URL or path to the card image.
+     * Public method to set the pages data and reset to the start.
+     * @param {Array<Array<string>>} pages Array of pages, each an array of 9 image paths.
      */
-    addCard(slotIndex, imgUrl) {
-        const slots = this.shadowRoot.querySelectorAll('.card-slot');
-        if (slotIndex < 0 || slotIndex >= slots.length) {
-            console.warn('Invalid slot index', slotIndex);
-            return;
+    setPages(pages) {
+        if (!Array.isArray(pages)) return;
+        this.pagesData = pages;
+        this.currentIndex = 0;
+        this._renderPages();
+    }
+
+    /**
+     * Renders the two visible pages based on currentIndex.
+     */
+    _renderPages() {
+        const pageEls = this.shadowRoot.querySelectorAll('.page');
+        // Left page
+        this._loadPage(pageEls[0], this.pagesData[this.currentIndex], this.currentIndex + 1);
+        // Right page
+        this._loadPage(pageEls[1], this.pagesData[this.currentIndex + 1], this.currentIndex + 2);
+    }
+
+    /**
+     * Helper to populate a .page element with up to 9 cards and set its page number.
+     * @param {HTMLElement} pageEl The page container element.
+     * @param {Array<string>} cardUrls Array of up to 9 image URLs.
+     * @param {number} pageNumber 1-based page number to display.
+     */
+    _loadPage(pageEl, cardUrls, pageNumber) {
+        const numberEl = pageEl.querySelector('.page-number');
+        numberEl.textContent = `Page ${pageNumber}`;
+        const container = pageEl.querySelector('.cards-container');
+        container.innerHTML = '';
+        const urls = Array.isArray(cardUrls) ? cardUrls : [];
+        for (let i = 0; i < 9; i++) {
+            const slot = document.createElement('div');
+            slot.classList.add('card-slot');
+            const url = urls[i];
+            if (url) {
+                const img = document.createElement('img');
+                img.src = url;
+                img.alt = 'Pokemon card';
+                slot.appendChild(img);
+            }
+            container.appendChild(slot);
         }
-        const slot = slots[slotIndex];
-        slot.innerHTML = `<img src="${imgUrl}" alt="Pokemon card">`;
     }
 
     /**
-     * Flip the right-hand page to turn forward.
+     * Advances forward by two pages, rendering empty slots if data is missing.
      */
-    turnPageLeft() {
-        const pages = this.shadowRoot.querySelectorAll('.page');
-        const rightPage = pages[1];
-        rightPage.classList.toggle('turn-right');
-        // Ensure left-page flip class is cleared
-        pages[0].classList.remove('turn-left');
+    flipForward() {
+        this.currentIndex += 2;
+        this._renderPages();
     }
 
     /**
-     * Flip the left-hand page to turn backward.
+     * Moves backward by two pages if not already at the start.
      */
-    turnPageRight() {
-        const pages = this.shadowRoot.querySelectorAll('.page');
-        const leftPage = pages[0];
-        leftPage.classList.toggle('turn-left');
-        // Ensure right-page flip class is cleared
-        pages[1].classList.remove('turn-right');
+    flipBackward() {
+        if (this.currentIndex - 2 >= 0) {
+            this.currentIndex -= 2;
+            this._renderPages();
+        }
     }
 }
 

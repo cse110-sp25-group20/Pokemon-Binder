@@ -2,17 +2,17 @@ import './pokemon-binder.js';
 
 function handleAddCard() {
     const binder = document.querySelector('pokemon-binder');
-    binder.addCard(0, 'card_back.png');
+    binder.setPages([['card_back.png','','','','','','','','']]);
 }
 
 function turnPageRight() {
     const binder = document.querySelector('pokemon-binder');
-    binder.turnPageRight();
+    binder.flipForward();
 }
 
 function turnPageLeft() {
     const binder = document.querySelector('pokemon-binder');
-    binder.turnPageLeft();
+    binder.flipBackward();
 }
 
 const addButton = document.getElementById('addCard');
