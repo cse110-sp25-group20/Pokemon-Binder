@@ -56,9 +56,14 @@ template.innerHTML = `
     .page.back {
       transform: rotateY(180deg);
     }
-    /* keep page number text upright on back face */
+    /* hide page number on back face until leaf flips */
     .page.back .page-number {
-      transform: rotateY(180deg);
+      transform: rotateY(180deg); /* keep upright when visible */
+      visibility: hidden;
+    }
+    .leaf.flip-forward .page.back .page-number,
+    .leaf.flip-back .page.back .page-number {
+      visibility: visible;
     }
     .page-number {
       font-size: 14px;
@@ -134,7 +139,7 @@ class PokemonBinder extends HTMLElement {
   }
 
   _renderFaces() {
-    // load left leaf front/back
+    // left leaf
     this._loadFace(
       this._leftLeaf.querySelector('.front'),
       this.pagesData[this.currentIndex],
@@ -145,7 +150,7 @@ class PokemonBinder extends HTMLElement {
       this.pagesData[this.currentIndex - 1],
       this.currentIndex
     );
-    // load right leaf front/back
+    // right leaf
     this._loadFace(
       this._rightLeaf.querySelector('.front'),
       this.pagesData[this.currentIndex + 1],
@@ -178,50 +183,45 @@ class PokemonBinder extends HTMLElement {
   }
 
   flipForward() {
-    // prime next
     this._loadFace(
       this._rightLeaf.querySelector('.back'),
       this.pagesData[this.currentIndex + 2],
       this.currentIndex + 3
     );
-    // animate
     this._rightLeaf.classList.add('flip-forward');
     this._rightLeaf.addEventListener(
       'transitionend',
       () => {
         this._rightLeaf.classList.remove('flip-forward');
         this.currentIndex += 2;
-        const prevTransition = this._rightLeaf.style.transition;
+        const prev = this._rightLeaf.style.transition;
         this._rightLeaf.style.transition = 'none';
         this._renderFaces();
         void this._rightLeaf.offsetWidth;
-        this._rightLeaf.style.transition = prevTransition;
+        this._rightLeaf.style.transition = prev;
       },
       { once: true }
     );
   }
 
   flipBackward() {
-    // prevent negative indices
     if (this.currentIndex < 2) return;
-    // prime prev
     this._loadFace(
       this._leftLeaf.querySelector('.back'),
       this.pagesData[this.currentIndex - 1],
       this.currentIndex
     );
-    // animate
     this._leftLeaf.classList.add('flip-back');
     this._leftLeaf.addEventListener(
       'transitionend',
       () => {
         this._leftLeaf.classList.remove('flip-back');
         this.currentIndex -= 2;
-        const prevTransition = this._leftLeaf.style.transition;
+        const prev = this._leftLeaf.style.transition;
         this._leftLeaf.style.transition = 'none';
         this._renderFaces();
         void this._leftLeaf.offsetWidth;
-        this._leftLeaf.style.transition = prevTransition;
+        this._leftLeaf.style.transition = prev;
       },
       { once: true }
     );
