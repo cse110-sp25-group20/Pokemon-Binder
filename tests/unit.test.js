@@ -21,7 +21,7 @@ describe('Unit tests', () => {
         const pagesData = await binder.pagesData;
         
         const expectedPage = [['card_back.png','','','','','','','','']];
-        expect(pagesData).toBe(expectedPage);
+        expect(pagesData).toEqual(expectedPage);
         expect(binder.currentIndex).toBe(0);
     });
 });
